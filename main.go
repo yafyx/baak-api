@@ -40,7 +40,7 @@ type Mahasiswa struct {
 	KelasBaru string `json:"kelas_baru"`
 }
 
-func getJadwal(url string, search string) (*Jadwal, error) {
+func fetchDocument(url string) (*goquery.Document, error) {
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,11 @@ func getJadwal(url string, search string) (*Jadwal, error) {
 		return nil, fmt.Errorf("error code status: %d %s", res.StatusCode, res.Status)
 	}
 
-	doc, err := goquery.NewDocumentFromReader(res.Body)
+	return goquery.NewDocumentFromReader(res.Body)
+}
+
+func getJadwal(url string, search string) (*Jadwal, error) {
+	doc, err := fetchDocument(url)
 	if err != nil {
 		return nil, err
 	}
@@ -108,17 +112,7 @@ func getJadwal(url string, search string) (*Jadwal, error) {
 }
 
 func getKegiatan(url string) ([]Kegiatan, error) {
-	res, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("error code status: %d %s", res.StatusCode, res.Status)
-	}
-
-	doc, err := goquery.NewDocumentFromReader(res.Body)
+	doc, err := fetchDocument(url)
 	if err != nil {
 		return nil, err
 	}
@@ -182,6 +176,17 @@ func getMahasiswa(baseURL string) ([]Mahasiswa, error) {
 	return mahasiswas, nil
 }
 
+func writeJSONResponse(w http.ResponseWriter, data interface{}) {
+	dataJson, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(dataJson)
+}
+
 func handlerJadwal(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
 	if len(segments) < 3 {
@@ -197,14 +202,7 @@ func handlerJadwal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dataJson, err := json.MarshalIndent(jadwal, "", "  ")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(dataJson)
+	writeJSONResponse(w, jadwal)
 }
 
 func handlerKegiatan(w http.ResponseWriter, r *http.Request) {
@@ -214,14 +212,7 @@ func handlerKegiatan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dataJson, err := json.Marshal(kegiatanList)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(dataJson)
+	writeJSONResponse(w, kegiatanList)
 }
 
 func handlerMahasiswa(w http.ResponseWriter, r *http.Request) {
@@ -253,14 +244,7 @@ func handlerMahasiswa(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dataJson, err := json.Marshal(mahasiswa)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(dataJson)
+	writeJSONResponse(w, mahasiswa)
 }
 
 func main() {
