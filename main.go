@@ -10,6 +10,10 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+const (
+	BaseURL = "https://baak.gunadarma.ac.id"
+)
+
 type Jadwal struct {
 	Search string `json:"search"`
 	Jadwal []Hari `json:"jadwal"`
@@ -195,7 +199,7 @@ func handlerJadwal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	search := segments[2]
-	url := "https://baak.gunadarma.ac.id/jadwal/cariJadKul?&teks=" + search
+	url := BaseURL + "/jadwal/cariJadKul?&teks=" + search
 	jadwal, err := getJadwal(url, search)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -206,7 +210,7 @@ func handlerJadwal(w http.ResponseWriter, r *http.Request) {
 }
 
 func handlerKegiatan(w http.ResponseWriter, r *http.Request) {
-	kegiatanList, err := getKegiatan("https://baak.gunadarma.ac.id/")
+	kegiatanList, err := getKegiatan(BaseURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -228,7 +232,7 @@ func handlerMahasiswa(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	for _, searchType := range searchTypes {
-		baseURL := fmt.Sprintf("https://baak.gunadarma.ac.id/cariKelasBaru?tipeKelasBaru=%s&teks=%s", searchType, searchTerm)
+		baseURL := BaseURL + "/cariKelasBaru?tipeKelasBaru=" + searchType + "&teks=" + searchTerm
 		mahasiswa, err = getMahasiswa(baseURL)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
