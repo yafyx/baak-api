@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -44,15 +45,19 @@ type Mahasiswa struct {
 	KelasBaru string `json:"kelas_baru"`
 }
 
+var httpClient = &http.Client{
+	Timeout: time.Second * 10,
+}
+
 func fetchDocument(url string) (*goquery.Document, error) {
-	res, err := http.Get(url)
+	res, err := httpClient.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		log.Fatalf("error code status: %d %s", res.StatusCode, res.Status)
+		return nil, fmt.Errorf("error code status: %d %s", res.StatusCode, res.Status)
 	}
 
 	return goquery.NewDocumentFromReader(res.Body)
