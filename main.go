@@ -263,7 +263,8 @@ func main() {
 	http.HandleFunc("/mahasiswa/", handlerMahasiswa)
 
 	port := ":8080"
-	fmt.Printf("Server is running on port %s\n", port)
+	url := "http://localhost" + port
+	fmt.Printf("Server is running on %s\n", url)
 
 	log.Fatal(http.ListenAndServe(port, nil))
 }
