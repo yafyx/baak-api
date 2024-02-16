@@ -193,6 +193,7 @@ func writeJSONResponse(w http.ResponseWriter, data interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write(dataJson)
 }
 
