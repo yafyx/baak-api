@@ -45,6 +45,11 @@ type Mahasiswa struct {
 	KelasBaru string `json:"kelas_baru"`
 }
 
+type Response struct {
+	Status string      `json:"status"`
+	Data   interface{} `json:"data"`
+}
+
 var httpClient = &http.Client{
 	Timeout: time.Second * 10,
 }
@@ -186,7 +191,12 @@ func getMahasiswa(baseURL string) ([]Mahasiswa, error) {
 }
 
 func writeJSONResponse(w http.ResponseWriter, data interface{}) {
-	dataJson, err := json.MarshalIndent(data, "", "  ")
+	response := Response{
+		Status: "success",
+		Data:   data,
+	}
+
+	dataJson, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -264,8 +274,7 @@ func main() {
 	http.HandleFunc("/mahasiswa/", handlerMahasiswa)
 
 	port := ":8080"
-	url := "http://localhost" + port
-	fmt.Printf("Server is running on %s\n", url)
+	fmt.Printf("Server is running on port %s\n", port)
 
 	log.Fatal(http.ListenAndServe(port, nil))
 }
