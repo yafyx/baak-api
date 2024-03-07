@@ -196,7 +196,7 @@ func writeJSONResponse(w http.ResponseWriter, data interface{}) {
 		Data:   data,
 	}
 
-	dataJson, err := json.MarshalIndent(response, "", "  ")
+	dataJson, err := json.Marshal(response)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
