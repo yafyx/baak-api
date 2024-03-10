@@ -11,9 +11,8 @@ import (
 
 func main() {
 	http.HandleFunc("/jadwal/", handlers.HandlerJadwal)
-
 	http.HandleFunc("/kalender", handlers.HandlerKegiatan)
-	http.HandleFunc("/mahasiswa/", handlers.HandlerMahasiswa)
+	http.HandleFunc("/kelasbaru/", handlers.HandlerMahasiswa)
 
 	port := config.GlobalEnv.HTTPPort
 	log.Printf("Server running on port %d", port)
