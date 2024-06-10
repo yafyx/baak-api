@@ -4,13 +4,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/yafyx/baak-api/config"
 	jadwalH "github.com/yafyx/baak-api/handlers/jadwal"
 	kegiatanH "github.com/yafyx/baak-api/handlers/kegiatan"
 	mahasiswaH "github.com/yafyx/baak-api/handlers/mahasiswa"
 	"github.com/yafyx/baak-api/models"
 	"github.com/yafyx/baak-api/utils"
 )
+
+const BASE_URL = "https://baak.gunadarma.ac.id"
 
 func HandlerJadwal(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
@@ -20,7 +21,7 @@ func HandlerJadwal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	search := segments[2]
-	url := config.GlobalEnv.BaseURL + "/jadwal/cariJadKul?&teks=" + search
+	url := BASE_URL + "/jadwal/cariJadKul?&teks=" + search
 	jadwal, err := jadwalH.GetJadwal(url, search)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -31,7 +32,7 @@ func HandlerJadwal(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlerKegiatan(w http.ResponseWriter, r *http.Request) {
-	kegiatanList, err := kegiatanH.GetKegiatan(config.GlobalEnv.BaseURL)
+	kegiatanList, err := kegiatanH.GetKegiatan(BASE_URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -53,7 +54,7 @@ func HandlerMahasiswa(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	for _, searchType := range searchTypes {
-		baseURL := config.GlobalEnv.BaseURL + "/cariKelasBaru?tipeKelasBaru=" + searchType + "&teks=" + searchTerm
+		baseURL := BASE_URL + "/cariKelasBaru?tipeKelasBaru=" + searchType + "&teks=" + searchTerm
 		mahasiswa, err = mahasiswaH.GetMahasiswa(baseURL)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
