@@ -2,17 +2,19 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/yafyx/baak-api/handlers"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/jadwal/":
+	path := r.URL.Path
+	switch {
+	case strings.HasPrefix(path, "/jadwal/"):
 		handlers.HandlerJadwal(w, r)
-	case "/kalender":
+	case strings.HasPrefix(path, "/kalender"):
 		handlers.HandlerKegiatan(w, r)
-	case "/kelasbaru/":
+	case strings.HasPrefix(path, "/kelasbaru/"):
 		handlers.HandlerMahasiswa(w, r)
 	default:
 		http.Error(w, "404 not found.", http.StatusNotFound)
