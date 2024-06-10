@@ -10,6 +10,8 @@ import (
 func Handler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	switch {
+	case path == "/":
+		handlers.HandlerHomepage(w, r)
 	case strings.HasPrefix(path, "/jadwal/"):
 		handlers.HandlerJadwal(w, r)
 	case strings.HasPrefix(path, "/kalender"):

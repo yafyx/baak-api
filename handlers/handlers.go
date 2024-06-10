@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -13,6 +14,9 @@ import (
 
 const BASE_URL = "https://baak.gunadarma.ac.id"
 
+func HandlerHomepage(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "/jadwal/{cari berdasarkan kelas/dosen}, /kalender, /kelasbaru/{cari berdasarkan kelas/npm/nama}")
+}
 func HandlerJadwal(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
 	if len(segments) < 3 {
