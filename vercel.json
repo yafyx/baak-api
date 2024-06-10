@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "name": "baak-api",
+  "builds": [
+    {
+      "src": "app/main.go",
+      "use": "@vercel/go"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/jadwal/(.*)",
+      "dest": "app/main.go"
+    },
+    {
+      "src": "/kalender",
+      "dest": "app/main.go"
+    },
+    {
+      "src": "/kelasbaru/(.*)",
+      "dest": "app/main.go"
+    }
+  ],
+  "env": {
+    "BASE_URL": "@base_url",
+    "PORT": "@port"
+  }
+}
