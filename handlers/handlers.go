@@ -47,7 +47,7 @@ func HandlerKegiatan(w http.ResponseWriter, r *http.Request) {
 
 func HandlerMahasiswa(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
-	if len(segments) < 3 {
+	if len(segments) < 3 || segments[2] == "" {
 		http.Error(w, "Missing search term in URL", http.StatusBadRequest)
 		return
 	}
