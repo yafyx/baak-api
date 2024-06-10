@@ -20,9 +20,5 @@
       "src": "/kelasbaru/(.*)",
       "dest": "app/main.go"
     }
-  ],
-  "env": {
-    "BASE_URL": "@base_url",
-    "PORT": "@port"
-  }
+  ]
 }
