@@ -9,6 +9,10 @@
   ],
   "routes": [
     {
+      "src": "/",
+      "dest": "app/main.go"
+    },
+    {
       "src": "/jadwal/(.*)",
       "dest": "app/main.go"
     },
