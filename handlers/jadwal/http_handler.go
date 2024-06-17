@@ -74,7 +74,14 @@ func GetJadwal(url string, search string) (map[string]interface{}, error) {
 	})
 
 	return map[string]interface{}{
-		"kelas":  search,
-		"jadwal": jadwal,
+		"kelas": search,
+		"jadwal": map[string]interface{}{
+			"senin":  jadwal.Senin,
+			"selasa": jadwal.Selasa,
+			"rabu":   jadwal.Rabu,
+			"kamis":  jadwal.Kamis,
+			"jumat":  jadwal.Jumat,
+			"sabtu":  jadwal.Sabtu,
+		},
 	}, nil
 }
