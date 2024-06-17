@@ -7,7 +7,7 @@ type Jadwal struct {
 type Hari struct {
 	Hari       string       `json:"hari"`
 	Kelas      string       `json:"kelas"`
-	MataKuliah []MataKuliah `json:"mata_kuliah"`
+	MataKuliah []MataKuliah `json:"matakuliah"`
 }
 
 type MataKuliah struct {
