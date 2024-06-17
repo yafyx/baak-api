@@ -1,4 +1,3 @@
-// handlers/http_handler.go
 package handlers
 
 import (
