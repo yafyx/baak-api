@@ -14,13 +14,13 @@ func GetJadwal(url string, search string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	jadwal := map[string]interface{}{
-		"senin":  "",
-		"selasa": "",
-		"rabu":   "",
-		"kamis":  "",
-		"jumat":  "",
-		"sabtu":  "",
+	jadwal := &models.Jadwal{
+		Senin:  "",
+		Selasa: "",
+		Rabu:   "",
+		Kamis:  "",
+		Jumat:  "",
+		Sabtu:  "",
 	}
 
 	doc.Find("table").First().Each(func(_ int, table *goquery.Selection) {
@@ -40,35 +40,35 @@ func GetJadwal(url string, search string) (map[string]interface{}, error) {
 
 			switch hari {
 			case "Senin":
-				if jadwal["senin"] == "" {
-					jadwal["senin"] = []models.MataKuliah{}
+				if jadwal.Senin == "" {
+					jadwal.Senin = []models.MataKuliah{}
 				}
-				jadwal["senin"] = append(jadwal["senin"].([]models.MataKuliah), mataKuliah)
+				jadwal.Senin = append(jadwal.Senin.([]models.MataKuliah), mataKuliah)
 			case "Selasa":
-				if jadwal["selasa"] == "" {
-					jadwal["selasa"] = []models.MataKuliah{}
+				if jadwal.Selasa == "" {
+					jadwal.Selasa = []models.MataKuliah{}
 				}
-				jadwal["selasa"] = append(jadwal["selasa"].([]models.MataKuliah), mataKuliah)
+				jadwal.Selasa = append(jadwal.Selasa.([]models.MataKuliah), mataKuliah)
 			case "Rabu":
-				if jadwal["rabu"] == "" {
-					jadwal["rabu"] = []models.MataKuliah{}
+				if jadwal.Rabu == "" {
+					jadwal.Rabu = []models.MataKuliah{}
 				}
-				jadwal["rabu"] = append(jadwal["rabu"].([]models.MataKuliah), mataKuliah)
+				jadwal.Rabu = append(jadwal.Rabu.([]models.MataKuliah), mataKuliah)
 			case "Kamis":
-				if jadwal["kamis"] == "" {
-					jadwal["kamis"] = []models.MataKuliah{}
+				if jadwal.Kamis == "" {
+					jadwal.Kamis = []models.MataKuliah{}
 				}
-				jadwal["kamis"] = append(jadwal["kamis"].([]models.MataKuliah), mataKuliah)
+				jadwal.Kamis = append(jadwal.Kamis.([]models.MataKuliah), mataKuliah)
 			case "Jum'at":
-				if jadwal["jumat"] == "" {
-					jadwal["jumat"] = []models.MataKuliah{}
+				if jadwal.Jumat == "" {
+					jadwal.Jumat = []models.MataKuliah{}
 				}
-				jadwal["jumat"] = append(jadwal["jumat"].([]models.MataKuliah), mataKuliah)
+				jadwal.Jumat = append(jadwal.Jumat.([]models.MataKuliah), mataKuliah)
 			case "Sabtu":
-				if jadwal["sabtu"] == "" {
-					jadwal["sabtu"] = []models.MataKuliah{}
+				if jadwal.Sabtu == "" {
+					jadwal.Sabtu = []models.MataKuliah{}
 				}
-				jadwal["sabtu"] = append(jadwal["sabtu"].([]models.MataKuliah), mataKuliah)
+				jadwal.Sabtu = append(jadwal.Sabtu.([]models.MataKuliah), mataKuliah)
 			}
 		})
 	})
