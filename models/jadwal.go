@@ -1,12 +1,12 @@
 package models
 
 type Jadwal struct {
-	Senin  interface{} `json:"Senin"`
-	Selasa interface{} `json:"Selasa"`
-	Rabu   interface{} `json:"Rabu"`
-	Kamis  interface{} `json:"Kamis"`
-	Jumat  interface{} `json:"Jumat"`
-	Sabtu  interface{} `json:"Sabtu"`
+	Senin  interface{} `json:"senin"`
+	Selasa interface{} `json:"selasa"`
+	Rabu   interface{} `json:"rabu"`
+	Kamis  interface{} `json:"kamis"`
+	Jumat  interface{} `json:"jumat"`
+	Sabtu  interface{} `json:"sabtu"`
 }
 
 type MataKuliah struct {
