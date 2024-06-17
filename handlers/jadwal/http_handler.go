@@ -1,3 +1,4 @@
+// handlers/http_handler.go
 package handlers
 
 import (
@@ -15,16 +16,13 @@ func GetJadwal(url string, search string) (*models.Jadwal, error) {
 	}
 
 	jadwal := &models.Jadwal{
-		Status: "success",
-		Data: models.Data{
-			Jadwal: []models.Hari{
-				{Hari: "Senin", Kelas: search, MataKuliah: []models.MataKuliah{}},
-				{Hari: "Selasa", Kelas: search, MataKuliah: []models.MataKuliah{}},
-				{Hari: "Rabu", Kelas: search, MataKuliah: []models.MataKuliah{}},
-				{Hari: "Kamis", Kelas: search, MataKuliah: []models.MataKuliah{}},
-				{Hari: "Jum'at", Kelas: search, MataKuliah: []models.MataKuliah{}},
-				{Hari: "Sabtu", Kelas: search, MataKuliah: []models.MataKuliah{}},
-			},
+		Jadwal: []models.Hari{
+			{Hari: "Senin", Kelas: search, MataKuliah: []models.MataKuliah{}},
+			{Hari: "Selasa", Kelas: search, MataKuliah: []models.MataKuliah{}},
+			{Hari: "Rabu", Kelas: search, MataKuliah: []models.MataKuliah{}},
+			{Hari: "Kamis", Kelas: search, MataKuliah: []models.MataKuliah{}},
+			{Hari: "Jum'at", Kelas: search, MataKuliah: []models.MataKuliah{}},
+			{Hari: "Sabtu", Kelas: search, MataKuliah: []models.MataKuliah{}},
 		},
 	}
 
@@ -43,25 +41,25 @@ func GetJadwal(url string, search string) (*models.Jadwal, error) {
 				Dosen: strings.TrimSpace(sel.Eq(5).Text()),
 			}
 
-			for i, h := range jadwal.Data.Jadwal {
+			for i, h := range jadwal.Jadwal {
 				if h.Hari == hari {
-					jadwal.Data.Jadwal[i].MataKuliah = append(jadwal.Data.Jadwal[i].MataKuliah, mataKuliah)
+					jadwal.Jadwal[i].MataKuliah = append(jadwal.Jadwal[i].MataKuliah, mataKuliah)
 					return
 				}
 			}
 
-			jadwal.Data.Jadwal = append(jadwal.Data.Jadwal, models.Hari{Hari: hari, Kelas: search, MataKuliah: []models.MataKuliah{mataKuliah}})
+			jadwal.Jadwal = append(jadwal.Jadwal, models.Hari{Hari: hari, Kelas: search, MataKuliah: []models.MataKuliah{mataKuliah}})
 		})
 	})
 
 	j := 0
-	for _, h := range jadwal.Data.Jadwal {
+	for _, h := range jadwal.Jadwal {
 		if len(h.MataKuliah) > 0 {
-			jadwal.Data.Jadwal[j] = h
+			jadwal.Jadwal[j] = h
 			j++
 		}
 	}
-	jadwal.Data.Jadwal = jadwal.Data.Jadwal[:j]
+	jadwal.Jadwal = jadwal.Jadwal[:j]
 
 	return jadwal, nil
 }

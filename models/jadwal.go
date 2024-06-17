@@ -1,12 +1,6 @@
-// models/models.go
 package models
 
 type Jadwal struct {
-	Status string `json:"status"`
-	Data   Data   `json:"data"`
-}
-
-type Data struct {
 	Jadwal []Hari `json:"jadwal"`
 }
 
