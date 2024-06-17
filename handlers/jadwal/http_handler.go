@@ -15,14 +15,12 @@ func GetJadwal(url string, search string) (*models.Jadwal, error) {
 	}
 
 	jadwal := &models.Jadwal{
-		Jadwal: []models.Hari{
-			{Hari: "Senin", Kelas: search, MataKuliah: []models.MataKuliah{}},
-			{Hari: "Selasa", Kelas: search, MataKuliah: []models.MataKuliah{}},
-			{Hari: "Rabu", Kelas: search, MataKuliah: []models.MataKuliah{}},
-			{Hari: "Kamis", Kelas: search, MataKuliah: []models.MataKuliah{}},
-			{Hari: "Jum'at", Kelas: search, MataKuliah: []models.MataKuliah{}},
-			{Hari: "Sabtu", Kelas: search, MataKuliah: []models.MataKuliah{}},
-		},
+		Senin:  "",
+		Selasa: "",
+		Rabu:   "",
+		Kamis:  "",
+		Jumat:  "",
+		Sabtu:  "",
 	}
 
 	doc.Find("table").First().Each(func(_ int, table *goquery.Selection) {
@@ -40,25 +38,40 @@ func GetJadwal(url string, search string) (*models.Jadwal, error) {
 				Dosen: strings.TrimSpace(sel.Eq(5).Text()),
 			}
 
-			for i, h := range jadwal.Jadwal {
-				if h.Hari == hari {
-					jadwal.Jadwal[i].MataKuliah = append(jadwal.Jadwal[i].MataKuliah, mataKuliah)
-					return
+			switch hari {
+			case "Senin":
+				if jadwal.Senin == "" {
+					jadwal.Senin = []models.MataKuliah{}
 				}
+				jadwal.Senin = append(jadwal.Senin.([]models.MataKuliah), mataKuliah)
+			case "Selasa":
+				if jadwal.Selasa == "" {
+					jadwal.Selasa = []models.MataKuliah{}
+				}
+				jadwal.Selasa = append(jadwal.Selasa.([]models.MataKuliah), mataKuliah)
+			case "Rabu":
+				if jadwal.Rabu == "" {
+					jadwal.Rabu = []models.MataKuliah{}
+				}
+				jadwal.Rabu = append(jadwal.Rabu.([]models.MataKuliah), mataKuliah)
+			case "Kamis":
+				if jadwal.Kamis == "" {
+					jadwal.Kamis = []models.MataKuliah{}
+				}
+				jadwal.Kamis = append(jadwal.Kamis.([]models.MataKuliah), mataKuliah)
+			case "Jum'at":
+				if jadwal.Jumat == "" {
+					jadwal.Jumat = []models.MataKuliah{}
+				}
+				jadwal.Jumat = append(jadwal.Jumat.([]models.MataKuliah), mataKuliah)
+			case "Sabtu":
+				if jadwal.Sabtu == "" {
+					jadwal.Sabtu = []models.MataKuliah{}
+				}
+				jadwal.Sabtu = append(jadwal.Sabtu.([]models.MataKuliah), mataKuliah)
 			}
-
-			jadwal.Jadwal = append(jadwal.Jadwal, models.Hari{Hari: hari, Kelas: search, MataKuliah: []models.MataKuliah{mataKuliah}})
 		})
 	})
-
-	j := 0
-	for _, h := range jadwal.Jadwal {
-		if len(h.MataKuliah) > 0 {
-			jadwal.Jadwal[j] = h
-			j++
-		}
-	}
-	jadwal.Jadwal = jadwal.Jadwal[:j]
 
 	return jadwal, nil
 }
