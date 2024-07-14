@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/yafyx/baak-api/models"
+	"baak-api/models"
 )
 
 func WriteJSONResponse(w http.ResponseWriter, data interface{}) {

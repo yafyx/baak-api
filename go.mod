@@ -1,4 +1,4 @@
-module github.com/yafyx/baak-api
+module baak-api
 
 go 1.21.3
 

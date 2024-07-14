@@ -3,9 +3,10 @@ package handlers
 import (
 	"strings"
 
+	"baak-api/models"
+	"baak-api/utils"
+
 	"github.com/PuerkitoBio/goquery"
-	"github.com/yafyx/baak-api/models"
-	"github.com/yafyx/baak-api/utils"
 )
 
 func GetKegiatan(url string) ([]models.Kegiatan, error) {

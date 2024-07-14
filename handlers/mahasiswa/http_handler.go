@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"strings"
 
+	"baak-api/models"
+
 	"github.com/PuerkitoBio/goquery"
-	"github.com/yafyx/baak-api/models"
 )
 
 func GetMahasiswa(baseURL string) ([]models.Mahasiswa, error) {

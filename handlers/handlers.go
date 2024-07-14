@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"strings"
 
-	jadwalH "github.com/yafyx/baak-api/handlers/jadwal"
-	kegiatanH "github.com/yafyx/baak-api/handlers/kegiatan"
-	mahasiswaH "github.com/yafyx/baak-api/handlers/mahasiswa"
-	"github.com/yafyx/baak-api/models"
-	"github.com/yafyx/baak-api/utils"
+	jadwalH "baak-api/handlers/jadwal"
+	kegiatanH "baak-api/handlers/kegiatan"
+	mahasiswaH "baak-api/handlers/mahasiswa"
+	"baak-api/models"
+	"baak-api/utils"
 )
 
 const BASE_URL = "https://baak.gunadarma.ac.id"
