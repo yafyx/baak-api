@@ -66,7 +66,13 @@ var httpClient = &http.Client{
 
 // Handlers
 func HandlerHomepage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "/jadwal/{kelas}, /kalender, /kelasbaru/{kelas/npm/nama}, /uts/{kelas/dosen}")
+	endpoints := []string{
+		"/jadwal/{kelas}",
+		"/kalender",
+		"/kelasbaru/{kelas/npm/nama}",
+		"/uts/{kelas/dosen}",
+	}
+	WriteJSONResponse(w, endpoints)
 }
 
 func HandlerJadwal(w http.ResponseWriter, r *http.Request) {
@@ -171,15 +177,20 @@ func main() {
 func FetchDocument(url string) (*goquery.Document, error) {
 	res, err := httpClient.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch URL: %v", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error code status: %d %s", res.StatusCode, res.Status)
+		return nil, fmt.Errorf("unexpected status code: %d %s", res.StatusCode, res.Status)
 	}
 
-	return goquery.NewDocumentFromReader(res.Body)
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse HTML: %v", err)
+	}
+
+	return doc, nil
 }
 
 func WriteJSONResponse(w http.ResponseWriter, data interface{}) {
@@ -188,15 +199,12 @@ func WriteJSONResponse(w http.ResponseWriter, data interface{}) {
 		Data:   data,
 	}
 
-	dataJSON, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Write(dataJSON)
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to encode JSON: %v", err), http.StatusInternalServerError)
+	}
 }
 
 func GetJadwal(url string) (Jadwal, error) {
@@ -206,10 +214,18 @@ func GetJadwal(url string) (Jadwal, error) {
 	}
 
 	jadwal := Jadwal{}
+	hariMap := map[string]*[]MataKuliah{
+		"Senin":  &jadwal.Senin,
+		"Selasa": &jadwal.Selasa,
+		"Rabu":   &jadwal.Rabu,
+		"Kamis":  &jadwal.Kamis,
+		"Jum'at": &jadwal.Jumat,
+		"Sabtu":  &jadwal.Sabtu,
+	}
 
 	doc.Find("table").First().Find("tr").Each(func(i int, row *goquery.Selection) {
 		cells := row.Find("td")
-		if cells.Length() == 0 {
+		if cells.Length() < 5 {
 			return
 		}
 
@@ -221,19 +237,8 @@ func GetJadwal(url string) (Jadwal, error) {
 			Dosen: strings.TrimSpace(cells.Eq(5).Text()),
 		}
 
-		switch hari {
-		case "Senin":
-			jadwal.Senin = append(jadwal.Senin, mataKuliah)
-		case "Selasa":
-			jadwal.Selasa = append(jadwal.Selasa, mataKuliah)
-		case "Rabu":
-			jadwal.Rabu = append(jadwal.Rabu, mataKuliah)
-		case "Kamis":
-			jadwal.Kamis = append(jadwal.Kamis, mataKuliah)
-		case "Jum'at":
-			jadwal.Jumat = append(jadwal.Jumat, mataKuliah)
-		case "Sabtu":
-			jadwal.Sabtu = append(jadwal.Sabtu, mataKuliah)
+		if hariSlice, ok := hariMap[hari]; ok {
+			*hariSlice = append(*hariSlice, mataKuliah)
 		}
 	})
 
