@@ -89,7 +89,15 @@ func HandlerJadwal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteJSONResponse(w, map[string]interface{}{"kelas": search, "jadwal": jadwal})
+	response := struct {
+		Kelas  string `json:"kelas"`
+		Jadwal Jadwal `json:"jadwal"`
+	}{
+		Kelas:  search,
+		Jadwal: jadwal,
+	}
+
+	WriteJSONResponse(w, response)
 }
 
 func HandlerKegiatan(w http.ResponseWriter, r *http.Request) {
