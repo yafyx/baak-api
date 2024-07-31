@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,10 +29,10 @@ type (
 		Jumat  []MataKuliah `json:"jumat"`
 		Sabtu  []MataKuliah `json:"sabtu"`
 	}
-
 	MataKuliah struct {
 		Nama  string `json:"nama"`
 		Waktu string `json:"waktu"`
+		Jam   string `json:"jam"`
 		Ruang string `json:"ruang"`
 		Dosen string `json:"dosen"`
 	}
@@ -231,6 +233,11 @@ func GetJadwal(url string) (Jadwal, error) {
 		"Sabtu":  &jadwal.Sabtu,
 	}
 
+	timeStampLUT, err := GetTimeStampLUT()
+	if err != nil {
+		return Jadwal{}, err
+	}
+
 	doc.Find("table").First().Find("tr").Each(func(i int, row *goquery.Selection) {
 		cells := row.Find("td")
 		if cells.Length() < 5 {
@@ -238,9 +245,13 @@ func GetJadwal(url string) (Jadwal, error) {
 		}
 
 		hari := strings.TrimSpace(cells.Eq(1).Text())
+		waktu := strings.TrimSpace(cells.Eq(3).Text())
+		jam := convertWaktuToJam(waktu, timeStampLUT)
+
 		mataKuliah := MataKuliah{
 			Nama:  strings.TrimSpace(cells.Eq(2).Text()),
-			Waktu: strings.TrimSpace(cells.Eq(3).Text()),
+			Waktu: waktu,
+			Jam:   jam,
 			Ruang: strings.TrimSpace(cells.Eq(4).Text()),
 			Dosen: strings.TrimSpace(cells.Eq(5).Text()),
 		}
@@ -251,6 +262,47 @@ func GetJadwal(url string) (Jadwal, error) {
 	})
 
 	return jadwal, nil
+}
+
+func GetTimeStampLUT() ([][]string, error) {
+	doc, err := FetchDocument(BaseURL + "/kuliahUjian/6")
+	if err != nil {
+		return nil, err
+	}
+
+	var result [][]string
+	doc.Find("table.cell-xs-6 tr").Each(func(i int, row *goquery.Selection) {
+		cells := row.Find("td")
+		if cells.Length() >= 2 {
+			timeRange := strings.TrimSpace(cells.Eq(1).Text())
+			timeRange = strings.ReplaceAll(timeRange, " ", "")
+			timeRange = strings.ReplaceAll(timeRange, ".", ":")
+			times := strings.Split(timeRange, "-")
+			if len(times) == 2 {
+				result = append(result, times)
+			}
+		}
+	})
+
+	return result, nil
+}
+
+func convertWaktuToJam(waktu string, timeStampLUT [][]string) string {
+	re := regexp.MustCompile(`(\d+)`)
+	matches := re.FindAllString(waktu, -1)
+
+	if len(matches) < 2 || len(matches) > 3 || len(timeStampLUT) == 0 {
+		return ""
+	}
+
+	start, _ := strconv.Atoi(matches[0])
+	end, _ := strconv.Atoi(matches[len(matches)-1])
+
+	if start < 1 || start > len(timeStampLUT) || end < 1 || end > len(timeStampLUT) {
+		return ""
+	}
+
+	return timeStampLUT[start-1][0] + " - " + timeStampLUT[end-1][1]
 }
 
 func GetKegiatan(url string) ([]Kegiatan, error) {
