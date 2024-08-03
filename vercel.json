@@ -1,28 +1,3 @@
 {
-  "version": 2,
-  "name": "baak-api",
-  "builds": [
-    {
-      "src": "app/main.go",
-      "use": "@vercel/go"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/",
-      "dest": "app/main.go"
-    },
-    {
-      "src": "/jadwal/(.*)",
-      "dest": "app/main.go"
-    },
-    {
-      "src": "/kalender",
-      "dest": "app/main.go"
-    },
-    {
-      "src": "/kelasbaru/(.*)",
-      "dest": "app/main.go"
-    }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
 }
