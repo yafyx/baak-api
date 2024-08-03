@@ -149,18 +149,68 @@ func GetKegiatan(url string) ([]models.Kegiatan, error) {
 	}
 
 	var kegiatanList []models.Kegiatan
+	var parentKegiatan string
+
 	doc.Find("table").First().Find("tr").Each(func(i int, row *goquery.Selection) {
 		cells := row.Find("td")
 		if cells.Length() == 2 {
+			kegiatanText := strings.TrimSpace(cells.Eq(0).Text())
+			tanggalText := strings.TrimSpace(cells.Eq(1).Text())
+
+			if tanggalText == "" {
+				parentKegiatan = kegiatanText
+				return
+			}
+
+			start, end := parseTanggal(tanggalText)
+
+			fullKegiatan := kegiatanText
+			if parentKegiatan != "" && isSubItem(kegiatanText) {
+				fullKegiatan = parentKegiatan + " " + kegiatanText
+			} else {
+				parentKegiatan = ""
+			}
+
 			kegiatan := models.Kegiatan{
-				Kegiatan: strings.TrimSpace(cells.Eq(0).Text()),
-				Tanggal:  strings.TrimSpace(cells.Eq(1).Text()),
+				Kegiatan: fullKegiatan,
+				Tanggal:  tanggalText,
+				Start:    start,
+				End:      end,
 			}
 			kegiatanList = append(kegiatanList, kegiatan)
+		} else {
+			parentKegiatan = ""
 		}
 	})
 
 	return kegiatanList, nil
+}
+
+func isSubItem(text string) bool {
+	return regexp.MustCompile(`^[a-z]\..+`).MatchString(text)
+}
+
+func parseTanggal(tanggal string) (start, end string) {
+	parts := strings.Split(tanggal, "-")
+	if len(parts) == 2 {
+		start = strings.TrimSpace(parts[0])
+		end = strings.TrimSpace(parts[1])
+	} else if len(parts) == 1 {
+		start = strings.TrimSpace(parts[0])
+		end = start
+	}
+
+	start = addYearIfMissing(start)
+	end = addYearIfMissing(end)
+
+	return start, end
+}
+
+func addYearIfMissing(date string) string {
+	if !strings.Contains(date, "20") {
+		return date + " 2024"
+	}
+	return date
 }
 
 func GetMahasiswa(baseURL string) ([]models.Mahasiswa, error) {

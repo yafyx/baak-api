@@ -20,6 +20,8 @@ type MataKuliah struct {
 type Kegiatan struct {
 	Kegiatan string `json:"kegiatan"`
 	Tanggal  string `json:"tanggal"`
+	Start    string `json:"start"`
+	End      string `json:"end"`
 }
 
 type Mahasiswa struct {
