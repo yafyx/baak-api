@@ -32,7 +32,7 @@ WIP!
 
 ## To-Do
 
-- [ x ] Jadwal
+- [x] Jadwal
 - [x] Kalender Akademik
 - [x] Mahasiswa Kelas 2 Baru
 - [x] UTS
