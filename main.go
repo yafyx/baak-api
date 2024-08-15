@@ -373,7 +373,7 @@ func parseTanggal(tanggal string) (start, end string) {
 
 func addYearIfMissing(date string) string {
 	if !strings.Contains(date, "20") {
-		return date + " 2024"
+		return date + " " + strconv.Itoa(time.Now().Year())
 	}
 	return date
 }
