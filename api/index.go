@@ -16,9 +16,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	case r.URL.Path == "/kalender":
 		handlers.HandlerKegiatan(w, r)
 	case strings.HasPrefix(r.URL.Path, "/kelasbaru/"):
-		handlers.HandlerMahasiswa(w, r)
+		handlers.HandlerKelasbaru(w, r)
 	case strings.HasPrefix(r.URL.Path, "/uts/"):
 		handlers.HandlerUTS(w, r)
+	case strings.HasPrefix(r.URL.Path, "/mahasiswabaru/"):
+		handlers.HandlerMahasiswaBaru(w, r)
 	default:
 		http.Error(w, "404 not found.", http.StatusNotFound)
 	}

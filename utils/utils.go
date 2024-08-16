@@ -213,7 +213,7 @@ func addYearIfMissing(date string) string {
 	return date
 }
 
-func GetMahasiswa(baseURL string) ([]models.Mahasiswa, error) {
+func GetKelasbaru(baseURL string) ([]models.Mahasiswa, error) {
 	var mahasiswas []models.Mahasiswa
 	page := 1
 
@@ -245,6 +245,41 @@ func GetMahasiswa(baseURL string) ([]models.Mahasiswa, error) {
 	}
 
 	return mahasiswas, nil
+}
+
+func GetMahasiswaBaru(url string) ([]models.MahasiswaBaru, error) {
+	var mahasiswaBaru []models.MahasiswaBaru
+	page := 1
+
+	for {
+		pageURL := fmt.Sprintf("%s&page=%d", url, page)
+		doc, err := FetchDocument(pageURL)
+		if err != nil {
+			return nil, err
+		}
+
+		doc.Find("table").First().Find("tr").Each(func(i int, row *goquery.Selection) {
+			cells := row.Find("td")
+			if cells.Length() == 6 {
+				mhs := models.MahasiswaBaru{
+					NoPend:     strings.TrimSpace(cells.Eq(1).Text()),
+					Nama:       strings.TrimSpace(cells.Eq(2).Text()),
+					NPM:        strings.TrimSpace(cells.Eq(3).Text()),
+					Kelas:      strings.TrimSpace(cells.Eq(4).Text()),
+					Keterangan: strings.TrimSpace(cells.Eq(5).Text()),
+				}
+				mahasiswaBaru = append(mahasiswaBaru, mhs)
+			}
+		})
+
+		if doc.Find(`a[rel="next"]`).Length() == 0 {
+			break
+		}
+
+		page++
+	}
+
+	return mahasiswaBaru, nil
 }
 
 func GetUTS(url string) ([]models.UTS, error) {

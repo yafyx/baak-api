@@ -31,6 +31,14 @@ type Mahasiswa struct {
 	KelasBaru string `json:"kelas_baru"`
 }
 
+type MahasiswaBaru struct {
+	NoPend     string `json:"no_pend"`
+	Nama       string `json:"nama"`
+	NPM        string `json:"npm"`
+	Kelas      string `json:"kelas"`
+	Keterangan string `json:"keterangan"`
+}
+
 type Response struct {
 	Status string      `json:"status"`
 	Data   interface{} `json:"data"`

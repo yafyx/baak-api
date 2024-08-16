@@ -9,7 +9,7 @@ import (
 	"github.com/yafyx/baak-api/utils"
 )
 
-func HandlerMahasiswa(w http.ResponseWriter, r *http.Request) {
+func HandlerKelasbaru(w http.ResponseWriter, r *http.Request) {
 	searchTerm := strings.TrimPrefix(r.URL.Path, "/kelasbaru/")
 	if searchTerm == "" {
 		http.Error(w, "Missing search term in URL", http.StatusBadRequest)
@@ -22,7 +22,7 @@ func HandlerMahasiswa(w http.ResponseWriter, r *http.Request) {
 
 	for _, searchType := range searchTypes {
 		url := fmt.Sprintf("%s/cariKelasBaru?tipeKelasBaru=%s&teks=%s", utils.BaseURL, searchType, searchTerm)
-		mahasiswas, err = utils.GetMahasiswa(url)
+		mahasiswas, err = utils.GetKelasbaru(url)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
