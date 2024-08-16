@@ -12,6 +12,7 @@ func HandlerHomepage(w http.ResponseWriter, r *http.Request) {
 		"/kalender",
 		"/kelasbaru/{kelas/npm/nama}",
 		"/uts/{kelas/dosen}",
+		"/mahasiswabaru/{kelas/nama}",
 	}
 	utils.WriteJSONResponse(w, endpoints)
 }
