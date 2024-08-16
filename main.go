@@ -51,6 +51,14 @@ type (
 		KelasBaru string `json:"kelas_baru"`
 	}
 
+	MahasiswaBaru struct {
+		NoPend     string `json:"no_pend"`
+		Nama       string `json:"nama"`
+		NPM        string `json:"npm"`
+		Kelas      string `json:"kelas"`
+		Keterangan string `json:"keterangan"`
+	}
+
 	Response struct {
 		Status string      `json:"status"`
 		Data   interface{} `json:"data"`
@@ -75,6 +83,7 @@ func HandlerHomepage(w http.ResponseWriter, r *http.Request) {
 		"/kalender",
 		"/kelasbaru/{kelas/npm/nama}",
 		"/uts/{kelas/dosen}",
+		"/mahasiswabaru/{kelas/nama}",
 	}
 	WriteJSONResponse(w, endpoints)
 }
@@ -145,6 +154,37 @@ func HandlerMahasiswa(w http.ResponseWriter, r *http.Request) {
 	WriteJSONResponse(w, mahasiswas)
 }
 
+func HandlerMahasiswaBaru(w http.ResponseWriter, r *http.Request) {
+	searchTerm := strings.TrimPrefix(r.URL.Path, "/mahasiswabaru/")
+	if searchTerm == "" {
+		http.Error(w, "Missing search term in URL", http.StatusBadRequest)
+		return
+	}
+
+	searchTypes := []string{"Kelas", "Nama"}
+	var mahasiswaBaru []MahasiswaBaru
+	var err error
+
+	for _, searchType := range searchTypes {
+		url := fmt.Sprintf("%s/cariMhsBaru?tipeMhsBaru=%s&teks=%s", BaseURL, searchType, searchTerm)
+		mahasiswaBaru, err = GetMahasiswaBaru(url)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if len(mahasiswaBaru) > 0 {
+			break
+		}
+	}
+
+	if len(mahasiswaBaru) == 0 {
+		http.Error(w, "Mahasiswa baru tidak ditemukan!", http.StatusNotFound)
+		return
+	}
+
+	WriteJSONResponse(w, mahasiswaBaru)
+}
+
 func HandlerUTS(w http.ResponseWriter, r *http.Request) {
 	search := strings.TrimPrefix(r.URL.Path, "/uts/")
 	if search == "" {
@@ -174,6 +214,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		HandlerMahasiswa(w, r)
 	case strings.HasPrefix(r.URL.Path, "/uts/"):
 		HandlerUTS(w, r)
+	case strings.HasPrefix(r.URL.Path, "/mahasiswabaru/"):
+		HandlerMahasiswaBaru(w, r)
 	default:
 		http.Error(w, "404 not found.", http.StatusNotFound)
 	}
@@ -410,6 +452,41 @@ func GetMahasiswa(baseURL string) ([]Mahasiswa, error) {
 	}
 
 	return mahasiswas, nil
+}
+
+func GetMahasiswaBaru(url string) ([]MahasiswaBaru, error) {
+	var mahasiswaBaru []MahasiswaBaru
+	page := 1
+
+	for {
+		pageURL := fmt.Sprintf("%s&page=%d", url, page)
+		doc, err := FetchDocument(pageURL)
+		if err != nil {
+			return nil, err
+		}
+
+		doc.Find("table").First().Find("tr").Each(func(i int, row *goquery.Selection) {
+			cells := row.Find("td")
+			if cells.Length() == 6 {
+				mhs := MahasiswaBaru{
+					NoPend:     strings.TrimSpace(cells.Eq(1).Text()),
+					Nama:       strings.TrimSpace(cells.Eq(2).Text()),
+					NPM:        strings.TrimSpace(cells.Eq(3).Text()),
+					Kelas:      strings.TrimSpace(cells.Eq(4).Text()),
+					Keterangan: strings.TrimSpace(cells.Eq(5).Text()),
+				}
+				mahasiswaBaru = append(mahasiswaBaru, mhs)
+			}
+		})
+
+		if doc.Find(`a[rel="next"]`).Length() == 0 {
+			break
+		}
+
+		page++
+	}
+
+	return mahasiswaBaru, nil
 }
 
 func GetUTS(url string) ([]UTS, error) {
