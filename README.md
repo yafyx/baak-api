@@ -34,6 +34,7 @@ WIP!
 
 - [x] Jadwal
 - [x] Kalender Akademik
+- [ ] Mahasiswa Baru
 - [x] Mahasiswa Kelas 2 Baru
 - [x] UTS
 - [ ] UU
