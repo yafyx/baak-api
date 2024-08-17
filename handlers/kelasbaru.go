@@ -17,25 +17,25 @@ func HandlerKelasbaru(w http.ResponseWriter, r *http.Request) {
 	}
 
 	searchTypes := []string{"Kelas", "NPM", "Nama"}
-	var mahasiswas []models.Mahasiswa
+	var kelasBaru []models.KelasBaru
 	var err error
 
 	for _, searchType := range searchTypes {
 		url := fmt.Sprintf("%s/cariKelasBaru?tipeKelasBaru=%s&teks=%s", utils.BaseURL, searchType, searchTerm)
-		mahasiswas, err = utils.GetKelasbaru(url)
+		kelasBaru, err = utils.GetKelasbaru(url)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if len(mahasiswas) > 0 {
+		if len(kelasBaru) > 0 {
 			break
 		}
 	}
 
-	if len(mahasiswas) == 0 {
+	if len(kelasBaru) == 0 {
 		http.Error(w, "Mahasiswa tidak ditemukan!", http.StatusNotFound)
 		return
 	}
 
-	utils.WriteJSONResponse(w, mahasiswas)
+	utils.WriteJSONResponse(w, kelasBaru)
 }

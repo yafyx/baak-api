@@ -213,8 +213,8 @@ func addYearIfMissing(date string) string {
 	return date
 }
 
-func GetKelasbaru(baseURL string) ([]models.Mahasiswa, error) {
-	var mahasiswas []models.Mahasiswa
+func GetKelasbaru(baseURL string) ([]models.KelasBaru, error) {
+	var kelasBaru []models.KelasBaru
 	page := 1
 
 	for {
@@ -227,13 +227,13 @@ func GetKelasbaru(baseURL string) ([]models.Mahasiswa, error) {
 		doc.Find("table").First().Find("tr").Each(func(i int, row *goquery.Selection) {
 			cells := row.Find("td")
 			if cells.Length() == 5 {
-				mahasiswa := models.Mahasiswa{
+				mhs := models.KelasBaru{
 					NPM:       strings.TrimSpace(cells.Eq(1).Text()),
 					Nama:      strings.TrimSpace(cells.Eq(2).Text()),
 					KelasLama: strings.TrimSpace(cells.Eq(3).Text()),
 					KelasBaru: strings.TrimSpace(cells.Eq(4).Text()),
 				}
-				mahasiswas = append(mahasiswas, mahasiswa)
+				kelasBaru = append(kelasBaru, mhs)
 			}
 		})
 
@@ -244,7 +244,7 @@ func GetKelasbaru(baseURL string) ([]models.Mahasiswa, error) {
 		page++
 	}
 
-	return mahasiswas, nil
+	return kelasBaru, nil
 }
 
 func GetMahasiswaBaru(url string) ([]models.MahasiswaBaru, error) {

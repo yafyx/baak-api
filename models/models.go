@@ -24,7 +24,7 @@ type Kegiatan struct {
 	End      string `json:"end"`
 }
 
-type Mahasiswa struct {
+type KelasBaru struct {
 	NPM       string `json:"npm"`
 	Nama      string `json:"nama"`
 	KelasLama string `json:"kelas_lama"`
