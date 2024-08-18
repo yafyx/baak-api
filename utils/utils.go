@@ -11,15 +11,22 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/yafyx/baak-api/models"
+	"golang.org/x/time/rate"
 )
 
 const (
 	BaseURL = "https://baak.gunadarma.ac.id"
 )
 
-var httpClient = &http.Client{
-	Timeout: 10 * time.Second,
-}
+var (
+	httpClient = &http.Client{
+		Timeout: 10 * time.Second,
+	}
+)
+
+var (
+	Limiter = rate.NewLimiter(rate.Limit(5), 10)
+)
 
 func FetchDocument(url string) (*goquery.Document, error) {
 	res, err := httpClient.Get(url)

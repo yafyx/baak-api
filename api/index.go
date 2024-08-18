@@ -5,9 +5,15 @@ import (
 	"strings"
 
 	"github.com/yafyx/baak-api/handlers"
+	"github.com/yafyx/baak-api/utils"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
+	if !utils.Limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
 	switch {
 	case r.URL.Path == "/":
 		handlers.HandlerHomepage(w, r)
