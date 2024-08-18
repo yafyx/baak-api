@@ -11,12 +11,20 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/time/rate"
 )
 
 // Constants
 const (
 	BaseURL  = "https://baak.gunadarma.ac.id"
 	HTTPPort = 8080
+)
+
+var (
+	httpClient = &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	limiter = rate.NewLimiter(rate.Limit(5), 10)
 )
 
 // Structs
@@ -72,11 +80,35 @@ type (
 	}
 )
 
-var httpClient = &http.Client{
-	Timeout: 10 * time.Second,
+func main() {
+	http.HandleFunc("/", Handler)
+	log.Printf("Server running on port %d", HTTPPort)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", HTTPPort), nil))
 }
 
 // Handlers
+func Handler(w http.ResponseWriter, r *http.Request) {
+	if !limiter.Allow() {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	switch {
+	case r.URL.Path == "/":
+		HandlerHomepage(w, r)
+	case strings.HasPrefix(r.URL.Path, "/jadwal/"):
+		HandlerJadwal(w, r)
+	case r.URL.Path == "/kalender":
+		HandlerKegiatan(w, r)
+	case strings.HasPrefix(r.URL.Path, "/kelasbaru/"):
+		HandlerMahasiswa(w, r)
+	case strings.HasPrefix(r.URL.Path, "/uts/"):
+		HandlerUTS(w, r)
+	default:
+		http.Error(w, "404 not found.", http.StatusNotFound)
+	}
+}
+
 func HandlerHomepage(w http.ResponseWriter, r *http.Request) {
 	endpoints := []string{
 		"/jadwal/{kelas}",
@@ -200,31 +232,6 @@ func HandlerUTS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteJSONResponse(w, uts)
-}
-
-func Handler(w http.ResponseWriter, r *http.Request) {
-	switch {
-	case r.URL.Path == "/":
-		HandlerHomepage(w, r)
-	case strings.HasPrefix(r.URL.Path, "/jadwal/"):
-		HandlerJadwal(w, r)
-	case r.URL.Path == "/kalender":
-		HandlerKegiatan(w, r)
-	case strings.HasPrefix(r.URL.Path, "/kelasbaru/"):
-		HandlerMahasiswa(w, r)
-	case strings.HasPrefix(r.URL.Path, "/uts/"):
-		HandlerUTS(w, r)
-	case strings.HasPrefix(r.URL.Path, "/mahasiswabaru/"):
-		HandlerMahasiswaBaru(w, r)
-	default:
-		http.Error(w, "404 not found.", http.StatusNotFound)
-	}
-}
-
-func main() {
-	http.HandleFunc("/", Handler)
-	log.Printf("Server running on port %d", HTTPPort)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", HTTPPort), nil))
 }
 
 // Helper Functions
