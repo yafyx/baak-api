@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -18,27 +17,6 @@ import (
 const (
 	BaseURL  = "https://baak.gunadarma.ac.id"
 	HTTPPort = 8080
-)
-
-const (
-	RequestsPerMinute = 60
-	BucketCapacity    = 60
-)
-
-type RateLimiter struct {
-	tokens         float64
-	lastRefillTime time.Time
-	mu             sync.Mutex
-}
-
-var (
-	httpClient = &http.Client{
-		Timeout: 10 * time.Second,
-	}
-	rateLimiter = &RateLimiter{
-		tokens:         BucketCapacity,
-		lastRefillTime: time.Now(),
-	}
 )
 
 // Structs
@@ -93,6 +71,10 @@ type (
 		Dosen string `json:"dosen"`
 	}
 )
+
+var httpClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
 
 // Handlers
 func HandlerHomepage(w http.ResponseWriter, r *http.Request) {
@@ -240,45 +222,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", RateLimitMiddleware(Handler))
+	http.HandleFunc("/", Handler)
 	log.Printf("Server running on port %d", HTTPPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", HTTPPort), nil))
 }
 
 // Helper Functions
-func RateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !rateLimiter.Allow() {
-			http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
-			return
-		}
-		next.ServeHTTP(w, r)
-	}
-}
-
-func (rl *RateLimiter) Allow() bool {
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
-
-	now := time.Now()
-	timePassed := now.Sub(rl.lastRefillTime).Minutes()
-	rl.tokens = min(BucketCapacity, rl.tokens+timePassed*RequestsPerMinute)
-	rl.lastRefillTime = now
-
-	if rl.tokens >= 1 {
-		rl.tokens--
-		return true
-	}
-	return false
-}
-
-func min(a, b float64) float64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func FetchDocument(url string) (*goquery.Document, error) {
 	res, err := httpClient.Get(url)
 	if err != nil {
