@@ -14,7 +14,7 @@ An unofficial API for BAAK.
 - Search for student information
 - Retrieve exam schedules
 
-## API Endpoints
+## API Endpoints / Routes
 
 - `/`: List all available endpoints
 - `/jadwal/{kelas}`: Get class schedule for a specific class (u can actually search for a class by its "dosen" name too)
@@ -30,11 +30,15 @@ This project is not affiliated with Gunadarma University or BAAK. It is created 
 
 WIP!
 
+## Showcase
+
+- [https://github.com/yafyx/ugcnn](https://github.com/yafyx/ugcnn), (Next.js, TypeScript), by [yfyx](https://github.com/yafyx)
+
 ## To-Do
 
 - [x] Jadwal
 - [x] Kalender Akademik
-- [ ] Mahasiswa Baru
+- [x] Mahasiswa Baru
 - [x] Mahasiswa Kelas 2 Baru
 - [x] UTS
 - [ ] UU
