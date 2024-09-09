@@ -414,17 +414,7 @@ func parseTanggal(tanggal string) (start, end string) {
 		end = start
 	}
 
-	start = addYearIfMissing(start)
-	end = addYearIfMissing(end)
-
 	return start, end
-}
-
-func addYearIfMissing(date string) string {
-	if !strings.Contains(date, "20") {
-		return date + " " + strconv.Itoa(time.Now().Year())
-	}
-	return date
 }
 
 func GetMahasiswa(baseURL string) ([]Mahasiswa, error) {
