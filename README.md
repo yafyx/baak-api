@@ -2,33 +2,33 @@
 
 An unofficial API for BAAK.
 
-## Prerequisites
+## Yang Dibutuhin
 
-- Go programming language installed on your system
-- Basic understanding of API
+- Udah install Go di komputer/laptop
+- Ngerti dikit-dikit soal API
 
-## Features
+## Fitur
 
-- Fetch class schedules
-- Get academic calendar events
-- Search for student information
-- Retrieve exam schedules
+- Liat jadwal kelas
+- Cek kalender akademik
+- Cari info mahasiswa
+- Liat jadwal ujian
 
-## API Endpoints / Routes
+## Endpoint / Routes yang Ada
 
-- `/`: List all available endpoints
-- `/jadwal/{kelas}`: Get class schedule for a specific class (u can actually search for a class by its "dosen" name too)
-- `/kalender`: Get academic calendar events
-- `/kelasbaru/{kelas/npm/nama}`: Search for student information by class, NPM, or name
-- `/uts/{kelas/dosen}`: Get exam schedule for a specific class or lecturer
+- `/`: Liat semua endpoint yang tersedia
+- `/jadwal/{kelas}`: Cek jadwal kelas tertentu (bisa search pake nama dosen juga)
+- `/kalender`: Liat kalender akademik
+- `/kelasbaru/{kelas/npm/nama}`: Cari info mahasiswa pake kelas, NPM, atau nama
+- `/uts/{kelas/dosen}`: Cek jadwal UTS buat kelas atau dosen tertentu
 
 ## Disclaimer
 
-This project is not affiliated with Gunadarma University or BAAK. It is created for educational purposes only and should not be used for any illegal activities. The author is not responsible for any misuse of this project.
+Project ini ga ada hubungannya sama Universitas Gunadarma atau BAAK ya. Ini cuma buat belajar aja, jangan dipake buat yang aneh-aneh. Developer ga bertanggung jawab kalo ada yang nyalahgunain ini.
 
-## Usage Examples
+## Contoh Penggunaan
 
-WIP!
+Masih dalam pengerjaan!
 
 ## Showcase
 
