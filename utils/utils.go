@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -45,20 +44,6 @@ func FetchDocument(url string) (*goquery.Document, error) {
 	}
 
 	return doc, nil
-}
-
-func WriteJSONResponse(w http.ResponseWriter, data interface{}) {
-	response := models.Response{
-		Status: "success",
-		Data:   data,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to encode JSON: %v", err), http.StatusInternalServerError)
-	}
 }
 
 func GetJadwal(url string) (models.Jadwal, error) {

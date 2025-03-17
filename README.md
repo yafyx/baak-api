@@ -1,38 +1,151 @@
-# BAAK Gunadarma API
+# BAAK API
 
 An unofficial API for BAAK.
-
-## Yang Dibutuhin
-
-- Udah install Go di komputer/laptop
-- Ngerti dikit-dikit soal API
-
-## Fitur
-
-- Liat jadwal kelas
-- Cek kalender akademik
-- Cari info mahasiswa
-- Liat jadwal ujian
-
-## Endpoint / Routes yang Ada
-
-- `/`: Liat semua endpoint yang tersedia
-- `/jadwal/{kelas}`: Cek jadwal kelas tertentu (bisa search pake nama dosen juga)
-- `/kalender`: Liat kalender akademik
-- `/kelasbaru/{kelas/npm/nama}`: Cari info mahasiswa pake kelas, NPM, atau nama
-- `/uts/{kelas/dosen}`: Cek jadwal UTS buat kelas atau dosen tertentu
 
 ## Disclaimer
 
 Project ini ga ada hubungannya sama Universitas Gunadarma atau BAAK ya. Ini cuma buat belajar aja, jangan dipake buat yang aneh-aneh. Developer ga bertanggung jawab kalo ada yang nyalahgunain ini.
 
-## Contoh Penggunaan
+## Fitur
 
-Masih dalam pengerjaan!
+- Pencarian Jadwal Kuliah
+- Kalender Akademik
+- Informasi Kelas Baru
+- Jadwal UTS
+- Informasi Mahasiswa Baru
+- Rate limiting
+- Dukungan CORS
+- Monitoring kesehatan
+- Format error yang terstandarisasi
 
-## Showcase
+## Endpoint API
 
-- [https://github.com/yafyx/ugcnn](https://github.com/yafyx/ugcnn), (Next.js, TypeScript), by [yfyx](https://github.com/yafyx)
+### Health Check
+
+```
+GET /health
+```
+
+Mengembalikan status kesehatan API.
+
+### Jadwal Kuliah
+
+```
+GET /jadwal/{kelas}
+```
+
+Mendapatkan informasi jadwal untuk kelas tertentu.
+
+Parameter:
+
+- `kelas` (path parameter): Kode kelas (minimal 3 karakter)
+
+### Kalender Akademik
+
+```
+GET /kalender
+```
+
+Mendapatkan informasi kalender akademik.
+
+### Informasi Kelas Baru
+
+```
+GET /kelasbaru/{kelas}
+```
+
+Mendapatkan informasi tentang kelas baru.
+
+Parameter:
+
+- `kelas` (path parameter): Kode kelas
+
+### Jadwal UTS
+
+```
+GET /uts/{kelas}
+```
+
+Mendapatkan jadwal UTS (Ujian Tengah Semester) untuk kelas tertentu.
+
+Parameter:
+
+- `kelas` (path parameter): Kode kelas
+
+### Informasi Mahasiswa Baru
+
+```
+GET /mahasiswabaru/{npm}
+```
+
+Mendapatkan informasi untuk mahasiswa baru.
+
+Parameter:
+
+- `npm` (path parameter): Nomor Pokok Mahasiswa
+
+## Format Response
+
+Semua response mengikuti format ini:
+
+```json
+{
+  "success": true,
+  "data": {
+    // Data response di sini
+  }
+}
+```
+
+Response error:
+
+```json
+{
+  "success": false,
+  "error": "Pesan error di sini"
+}
+```
+
+## Rate Limiting
+
+API ini menggunakan rate limiting untuk mencegah penyalahgunaan. Secara default, mengizinkan 60 request per menit per alamat IP.
+
+## Konfigurasi
+
+API bisa dikonfigurasi menggunakan environment variables:
+
+- `PORT`: Port server (default: ":8080")
+- `BASE_URL`: URL dasar website BAAK (default: "https://baak.gunadarma.ac.id")
+- `RATE_LIMIT_PER_MIN`: Batas rate per menit (default: 60)
+- `ALLOWED_ORIGINS`: Daftar origin CORS yang diizinkan, dipisahkan dengan koma (default: "\*")
+
+## Development
+
+### Prasyarat
+
+- Go 1.16 atau lebih tinggi
+- Git
+
+### Setup
+
+1. Clone repository:
+
+```bash
+git clone https://github.com/yourusername/baak-api.git
+cd baak-api
+```
+
+2. Install dependencies:
+
+```bash
+go mod download
+```
+
+3. Jalankan server:
+
+```bash
+go run api/index.go
+```
 
 ## To-Do
 
