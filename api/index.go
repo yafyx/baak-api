@@ -1,6 +1,8 @@
-package handler
+package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -29,5 +31,13 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerMahasiswaBaru(w, r)
 	default:
 		http.Error(w, "404 not found.", http.StatusNotFound)
+	}
+}
+
+func main() {
+	port := ":8080"
+	fmt.Printf("Server starting on port %s...\n", port)
+	if err := http.ListenAndServe(port, http.HandlerFunc(Handler)); err != nil {
+		log.Fatal(err)
 	}
 }
