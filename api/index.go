@@ -1,12 +1,9 @@
 package api
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
-	"github.com/yafyx/baak-api/config"
 	"github.com/yafyx/baak-api/handlers"
 	"github.com/yafyx/baak-api/middleware"
 	"github.com/yafyx/baak-api/utils"
@@ -44,15 +41,5 @@ func handleRoutes(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerMahasiswaBaru(w, r)
 	default:
 		utils.WriteNotFoundError(w)
-	}
-}
-
-func main() {
-	config.LoadConfig()
-
-	port := config.AppConfig.Port
-	fmt.Printf("Server starting on port %s...\n", port)
-	if err := http.ListenAndServe(port, http.HandlerFunc(Handler)); err != nil {
-		log.Fatal(err)
 	}
 }

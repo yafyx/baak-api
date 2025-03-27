@@ -1,13 +1,23 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
 	handler "github.com/yafyx/baak-api/api"
+	"github.com/yafyx/baak-api/config"
 )
 
 func main() {
-	// The actual server is started in the handler package when deployed to Vercel
+	config.LoadConfig()
+
+	// Start server (only runs locally, not on Vercel)
+	port := config.AppConfig.Port
+	fmt.Printf("Server starting on port %s...\n", port)
+	if err := http.ListenAndServe(port, http.HandlerFunc(Handler)); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Handler is exported to be used by Vercel
