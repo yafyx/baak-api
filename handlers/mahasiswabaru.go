@@ -12,7 +12,7 @@ import (
 func HandlerMahasiswaBaru(w http.ResponseWriter, r *http.Request) {
 	searchTerm := strings.TrimPrefix(r.URL.Path, "/mahasiswabaru/")
 	if searchTerm == "" {
-		http.Error(w, "Missing search term in URL", http.StatusBadRequest)
+		utils.WriteValidationError(w, "Missing search term in URL")
 		return
 	}
 
@@ -24,7 +24,7 @@ func HandlerMahasiswaBaru(w http.ResponseWriter, r *http.Request) {
 		url := fmt.Sprintf("%s/cariMhsBaru?tipeMhsBaru=%s&teks=%s", utils.BaseURL, searchType, searchTerm)
 		mahasiswaBaru, err = utils.GetMahasiswaBaru(url)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			utils.WriteHTTPError(w, err)
 			return
 		}
 		if len(mahasiswaBaru) > 0 {
@@ -33,7 +33,7 @@ func HandlerMahasiswaBaru(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(mahasiswaBaru) == 0 {
-		http.Error(w, "Mahasiswa baru tidak ditemukan!", http.StatusNotFound)
+		utils.WriteNotFoundError(w)
 		return
 	}
 

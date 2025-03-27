@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -12,6 +13,11 @@ import (
 	"github.com/yafyx/baak-api/models"
 	"golang.org/x/time/rate"
 )
+
+// Initialize the random number generator with a unique seed
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 const (
 	BaseURL = "https://baak.gunadarma.ac.id"
@@ -27,23 +33,81 @@ var (
 	Limiter = rate.NewLimiter(rate.Limit(5), 10)
 )
 
+// List of common user agents to rotate through :)
+var userAgents = []string{
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0",
+	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (iPad; CPU OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
+}
+
 func FetchDocument(url string) (*goquery.Document, error) {
-	res, err := httpClient.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch URL: %v", err)
-	}
-	defer res.Body.Close()
+	maxRetries := 3
+	backoffFactor := 2.0
+	initialBackoff := 1 * time.Second
 
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d %s", res.StatusCode, res.Status)
+	var lastErr error
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Create a new request
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %v", err)
+		}
+
+		// Set headers to appear more like a browser
+		req.Header.Set("User-Agent", userAgents[rand.Intn(len(userAgents))])
+		req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+		req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+		req.Header.Set("Connection", "keep-alive")
+		req.Header.Set("Upgrade-Insecure-Requests", "1")
+		req.Header.Set("Sec-Fetch-Dest", "document")
+		req.Header.Set("Sec-Fetch-Mode", "navigate")
+		req.Header.Set("Sec-Fetch-Site", "none")
+		req.Header.Set("Sec-Fetch-User", "?1")
+		req.Header.Set("Cache-Control", "max-age=0")
+
+		// Execute the request
+		res, err := httpClient.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to fetch URL: %v", err)
+			backoffTime := time.Duration(float64(initialBackoff) * (backoffFactor * float64(attempt)))
+			time.Sleep(backoffTime)
+			continue
+		}
+		defer res.Body.Close()
+
+		// Handle response based on status code
+		if res.StatusCode != http.StatusOK {
+			if res.StatusCode == http.StatusForbidden {
+				lastErr = fmt.Errorf("access forbidden (403): the server might be restricting access or detecting automated requests")
+				// For 403 errors, use a longer backoff
+				backoffTime := time.Duration(float64(initialBackoff*2) * (backoffFactor * float64(attempt)))
+				time.Sleep(backoffTime)
+				continue
+			}
+
+			lastErr = fmt.Errorf("unexpected status code: %d %s", res.StatusCode, res.Status)
+			if attempt < maxRetries-1 {
+				backoffTime := time.Duration(float64(initialBackoff) * (backoffFactor * float64(attempt)))
+				time.Sleep(backoffTime)
+				continue
+			}
+			return nil, lastErr
+		}
+
+		// Successfully got a 200 OK response, parse the document
+		doc, err := goquery.NewDocumentFromReader(res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse HTML: %v", err)
+		}
+
+		return doc, nil
 	}
 
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse HTML: %v", err)
-	}
-
-	return doc, nil
+	// If we got here, all attempts failed
+	return nil, fmt.Errorf("all retry attempts failed: %v", lastErr)
 }
 
 func GetJadwal(url string) (models.Jadwal, error) {

@@ -31,7 +31,7 @@ func HandlerJadwal(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprintf("%s/jadwal/cariJadKul?&teks=%s", config.AppConfig.BaseURL, search)
 	jadwal, err := utils.GetJadwal(url)
 	if err != nil {
-		utils.WriteInternalServerError(w)
+		utils.WriteHTTPError(w, err)
 		return
 	}
 
