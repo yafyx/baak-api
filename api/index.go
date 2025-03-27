@@ -1,8 +1,10 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/yafyx/baak-api/handlers"
 	"github.com/yafyx/baak-api/middleware"
@@ -10,6 +12,11 @@ import (
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 50*time.Second)
+	defer cancel()
+
+	r = r.WithContext(ctx)
+
 	// Apply middleware chain
 	handler := middleware.RecoveryMiddleware(
 		middleware.LoggingMiddleware(

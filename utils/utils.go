@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -25,7 +26,14 @@ const (
 
 var (
 	httpClient = &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 15 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 10,
+			MaxConnsPerHost:     20,
+			IdleConnTimeout:     20 * time.Second,
+			DisableCompression:  false,
+		},
 	}
 )
 
@@ -50,8 +58,12 @@ func FetchDocument(url string) (*goquery.Document, error) {
 	var lastErr error
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Create a context with timeout
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
 		// Create a new request
-		req, err := http.NewRequest("GET", url, nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create request: %v", err)
 		}
