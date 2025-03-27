@@ -5,23 +5,46 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/yafyx/baak-api/models"
+	"golang.org/x/net/publicsuffix"
 	"golang.org/x/time/rate"
 )
 
 // Initialize the random number generator with a unique seed
 func init() {
 	rand.Seed(time.Now().UnixNano())
+
+	// Initialize cookie jar for session persistence
+	jar, err := cookiejar.New(&cookiejar.Options{
+		PublicSuffixList: publicsuffix.List,
+	})
+	if err != nil {
+		panic(fmt.Sprintf("Failed to create cookie jar: %v", err))
+	}
+	httpClient.Jar = jar
 }
 
 const (
 	BaseURL = "https://baak.gunadarma.ac.id"
+)
+
+// Session cookies and visited pages for more authentic requests
+var (
+	visitedPages = []string{
+		BaseURL,
+		BaseURL + "/jadwal",
+		BaseURL + "/kalender",
+	}
+	clientMutex = &sync.RWMutex{}
 )
 
 var (
@@ -41,7 +64,7 @@ var (
 	Limiter = rate.NewLimiter(rate.Limit(5), 10)
 )
 
-// List of common user agents to rotate through :)
+// List of common user agents to rotate through
 var userAgents = []string{
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
 	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15",
@@ -50,16 +73,95 @@ var userAgents = []string{
 	"Mozilla/5.0 (iPad; CPU OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
 }
 
-func FetchDocument(url string) (*goquery.Document, error) {
-	maxRetries := 3
+// Additional realistic accept-language values
+var acceptLanguages = []string{
+	"en-US,en;q=0.9",
+	"en-GB,en;q=0.8,en-US;q=0.9",
+	"en-CA,en-US;q=0.9,en;q=0.8",
+	"en-AU,en;q=0.9,en-GB;q=0.8",
+	"id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+}
+
+// Simulate human-like delays
+func humanDelay() {
+	// Random delay between 1-3 seconds to simulate human interaction
+	delay := 1000 + rand.Intn(2000)
+	time.Sleep(time.Duration(delay) * time.Millisecond)
+}
+
+// getClient returns an HTTP client, potentially with a different proxy
+func getClient() *http.Client {
+	clientMutex.Lock()
+	defer clientMutex.Unlock()
+
+	// If we have proxies configured, try to use them
+	proxyManager := GetProxyManager()
+	if proxyManager.HasProxies() {
+		client, err := proxyManager.GetClient()
+		if err == nil {
+			return client
+		}
+		// If error, fall back to default client
+	}
+
+	return httpClient
+}
+
+// Warm up the session by visiting the homepage first
+func ensureSession() error {
+	// Visit the homepage first to establish cookies if we haven't done so already
+	baseUrl, err := url.Parse(BaseURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse base URL: %v", err)
+	}
+
+	// Check if we already have cookies for this domain
+	clientMutex.RLock()
+	hasCookies := len(httpClient.Jar.Cookies(baseUrl)) > 0
+	clientMutex.RUnlock()
+
+	if !hasCookies {
+		_, err := FetchDocumentWithRetry(BaseURL, "", 1)
+		if err != nil {
+			return fmt.Errorf("failed to establish session: %v", err)
+		}
+		// Add a slight delay after session establishment
+		humanDelay()
+	}
+	return nil
+}
+
+// Fetch a document with proper referrer and headers
+func FetchDocumentWithRetry(url string, referrer string, maxRetries int) (*goquery.Document, error) {
 	backoffFactor := 2.0
 	initialBackoff := 1 * time.Second
-
 	var lastErr error
 
+	// Use a default referrer if none provided
+	if referrer == "" {
+		if len(visitedPages) > 0 {
+			referrer = visitedPages[rand.Intn(len(visitedPages))]
+		} else {
+			referrer = BaseURL
+		}
+	}
+
+	// Get a client (may have a different proxy)
+	client := getClient()
+
 	for attempt := 0; attempt < maxRetries; attempt++ {
+		// Add human-like delay between attempts
+		if attempt > 0 {
+			humanDelay()
+
+			// For retry attempts, try to get a fresh client with potentially different proxy
+			if attempt > 1 {
+				client = getClient()
+			}
+		}
+
 		// Create a context with timeout
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 
 		// Create a new request
@@ -68,20 +170,27 @@ func FetchDocument(url string) (*goquery.Document, error) {
 			return nil, fmt.Errorf("failed to create request: %v", err)
 		}
 
-		// Set headers to appear more like a browser
-		req.Header.Set("User-Agent", userAgents[rand.Intn(len(userAgents))])
+		// Randomize User-Agent and other headers
+		userAgent := userAgents[rand.Intn(len(userAgents))]
+		acceptLang := acceptLanguages[rand.Intn(len(acceptLanguages))]
+
+		req.Header.Set("User-Agent", userAgent)
 		req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-		req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+		req.Header.Set("Accept-Language", acceptLang)
 		req.Header.Set("Connection", "keep-alive")
 		req.Header.Set("Upgrade-Insecure-Requests", "1")
+		req.Header.Set("Referer", referrer)
 		req.Header.Set("Sec-Fetch-Dest", "document")
 		req.Header.Set("Sec-Fetch-Mode", "navigate")
-		req.Header.Set("Sec-Fetch-Site", "none")
+		req.Header.Set("Sec-Fetch-Site", "same-origin")
 		req.Header.Set("Sec-Fetch-User", "?1")
 		req.Header.Set("Cache-Control", "max-age=0")
 
+		// Add a pseudo-random request ID to make each request unique
+		req.Header.Set("X-Request-ID", fmt.Sprintf("%d", time.Now().UnixNano()))
+
 		// Execute the request
-		res, err := httpClient.Do(req)
+		res, err := client.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to fetch URL: %v", err)
 			backoffTime := time.Duration(float64(initialBackoff) * (backoffFactor * float64(attempt)))
@@ -94,8 +203,9 @@ func FetchDocument(url string) (*goquery.Document, error) {
 		if res.StatusCode != http.StatusOK {
 			if res.StatusCode == http.StatusForbidden {
 				lastErr = fmt.Errorf("access forbidden (403): the server might be restricting access or detecting automated requests")
-				// For 403 errors, use a longer backoff
-				backoffTime := time.Duration(float64(initialBackoff*2) * (backoffFactor * float64(attempt)))
+				// For 403 errors, use a longer backoff with random jitter
+				jitter := float64(1.0 + (rand.Float64() * 0.5)) // 1.0-1.5 jitter factor
+				backoffTime := time.Duration(float64(initialBackoff*3) * (backoffFactor * float64(attempt) * jitter))
 				time.Sleep(backoffTime)
 				continue
 			}
@@ -109,6 +219,13 @@ func FetchDocument(url string) (*goquery.Document, error) {
 			return nil, lastErr
 		}
 
+		// Store current URL as visited page for future referrers
+		if len(visitedPages) > 5 {
+			// Keep the list to a reasonable size
+			visitedPages = visitedPages[1:]
+		}
+		visitedPages = append(visitedPages, url)
+
 		// Successfully got a 200 OK response, parse the document
 		doc, err := goquery.NewDocumentFromReader(res.Body)
 		if err != nil {
@@ -120,6 +237,18 @@ func FetchDocument(url string) (*goquery.Document, error) {
 
 	// If we got here, all attempts failed
 	return nil, fmt.Errorf("all retry attempts failed: %v", lastErr)
+}
+
+func FetchDocument(url string) (*goquery.Document, error) {
+	// Ensure we have an active session
+	if err := ensureSession(); err != nil {
+		return nil, err
+	}
+
+	// Add slight random delay to mimic human behavior
+	humanDelay()
+
+	return FetchDocumentWithRetry(url, "", 5) // Increase max retries to 5
 }
 
 func GetJadwal(url string) (models.Jadwal, error) {
