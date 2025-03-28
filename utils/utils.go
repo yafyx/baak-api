@@ -2,8 +2,11 @@ package utils
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"io"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -35,6 +38,7 @@ func init() {
 
 const (
 	BaseURL = "https://baak.gunadarma.ac.id"
+	BaseIP  = "103.23.40.57" // IP address for direct access
 )
 
 // Session cookies and visited pages for more authentic requests
@@ -49,13 +53,31 @@ var (
 
 var (
 	httpClient = &http.Client{
-		Timeout: 15 * time.Second,
+		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
 			MaxIdleConns:        100,
 			MaxIdleConnsPerHost: 10,
-			MaxConnsPerHost:     20,
-			IdleConnTimeout:     20 * time.Second,
-			DisableCompression:  false,
+			MaxConnsPerHost:     10,
+			IdleConnTimeout:     60 * time.Second,
+			TLSHandshakeTimeout: 10 * time.Second,
+			DisableCompression:  true,
+			ForceAttemptHTTP2:   false,
+			DisableKeepAlives:   false,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // Skip verification for testing
+			},
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// Allow up to 10 redirects
+			if len(via) >= 10 {
+				return http.ErrUseLastResponse
+			}
+			return nil
 		},
 	}
 )
@@ -107,6 +129,74 @@ func getClient() *http.Client {
 	return httpClient
 }
 
+// directIPRequest makes a request directly to the server's IP address
+func directIPRequest() error {
+	// Attempt direct connection via IP
+	directURL := fmt.Sprintf("http://%s", BaseIP)
+	req, err := http.NewRequest("GET", directURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create direct IP request: %v", err)
+	}
+
+	// Set headers to appear as a genuine browser request
+	req.Host = "baak.gunadarma.ac.id" // Set the Host header to the domain name
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	req.Header.Set("Accept-Encoding", "gzip, deflate")
+	req.Header.Set("Connection", "keep-alive")
+	req.Header.Set("Upgrade-Insecure-Requests", "1")
+
+	// Execute the request
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("direct IP request failed: %v", err)
+	}
+	defer res.Body.Close()
+
+	// Read and discard the body to ensure connection reuse
+	_, err = io.Copy(io.Discard, res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	// Check cookies
+	baseUrl, _ := url.Parse(BaseURL)
+	clientMutex.RLock()
+	hasCookies := len(httpClient.Jar.Cookies(baseUrl)) > 0
+	clientMutex.RUnlock()
+
+	if !hasCookies {
+		return fmt.Errorf("no cookies established with direct IP request")
+	}
+
+	return nil
+}
+
+// simpleRequest makes a very basic request to the given URL
+func simpleRequest(targetURL string) error {
+	req, err := http.NewRequest("GET", targetURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %v", err)
+	}
+	defer res.Body.Close()
+
+	// Read and discard the body to ensure connection reuse
+	_, err = io.Copy(io.Discard, res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	return nil
+}
+
 // Warm up the session by visiting the homepage first
 func ensureSession() error {
 	// Visit the homepage first to establish cookies if we haven't done so already
@@ -121,13 +211,48 @@ func ensureSession() error {
 	clientMutex.RUnlock()
 
 	if !hasCookies {
-		_, err := FetchDocumentWithRetry(BaseURL, "", 1)
+		fmt.Println("[DEBUG] No cookies found, trying to establish session")
+
+		// Try HTTP first (some sites redirect HTTP to HTTPS)
+		err := simpleRequest("http://baak.gunadarma.ac.id")
+		if err == nil {
+			// Check if we got cookies
+			clientMutex.RLock()
+			hasCookies := len(httpClient.Jar.Cookies(baseUrl)) > 0
+			clientMutex.RUnlock()
+
+			if hasCookies {
+				fmt.Println("[DEBUG] Session established using HTTP request")
+				return nil
+			}
+		}
+
+		// Try HTTPS
+		err = simpleRequest(BaseURL)
+		if err == nil {
+			// Check if we got cookies
+			clientMutex.RLock()
+			hasCookies := len(httpClient.Jar.Cookies(baseUrl)) > 0
+			clientMutex.RUnlock()
+
+			if hasCookies {
+				fmt.Println("[DEBUG] Session established using HTTPS request")
+				return nil
+			}
+		}
+
+		// Try direct IP access as a last resort
+		fmt.Println("[DEBUG] Trying direct IP access method")
+		err = directIPRequest()
 		if err != nil {
 			return fmt.Errorf("failed to establish session: %v", err)
+		} else {
+			fmt.Println("[DEBUG] Session established using direct IP method")
 		}
-		// Add a slight delay after session establishment
-		humanDelay()
+	} else {
+		fmt.Println("[DEBUG] Session already established")
 	}
+
 	return nil
 }
 
@@ -490,4 +615,9 @@ func GetUTS(url string) ([]models.UTS, error) {
 	})
 
 	return utsList, nil
+}
+
+// EnsureSessionPublic is a public wrapper around ensureSession
+func EnsureSessionPublic() error {
+	return ensureSession()
 }
