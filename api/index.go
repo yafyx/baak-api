@@ -36,6 +36,8 @@ func handleRoutes(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerHomepage(w, r)
 	case r.URL.Path == "/health":
 		handlers.HandlerHealth(w, r)
+	case r.URL.Path == "/jadwal":
+		handlers.HandlerJadwalSearch(w, r)
 	case strings.HasPrefix(r.URL.Path, "/jadwal/"):
 		handlers.HandlerJadwal(w, r)
 	case r.URL.Path == "/kalender":

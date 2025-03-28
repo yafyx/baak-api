@@ -45,3 +45,39 @@ func HandlerJadwal(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONResponse(w, response)
 }
+
+func HandlerJadwalSearch(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.WriteErrorResponse(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	search := r.URL.Query().Get("q")
+	if search == "" {
+		utils.WriteValidationError(w, "Missing search query parameter 'q'")
+		return
+	}
+
+	// Validate input
+	if len(search) < 3 {
+		utils.WriteValidationError(w, "Search query must be at least 3 characters long")
+		return
+	}
+
+	url := fmt.Sprintf("%s/jadwal/cariJadKul?&teks=%s", config.AppConfig.BaseURL, search)
+	jadwal, err := utils.GetJadwal(url)
+	if err != nil {
+		utils.WriteHTTPError(w, err)
+		return
+	}
+
+	response := struct {
+		Query  string        `json:"query"`
+		Jadwal models.Jadwal `json:"jadwal"`
+	}{
+		Query:  search,
+		Jadwal: jadwal,
+	}
+
+	utils.WriteJSONResponse(w, response)
+}
