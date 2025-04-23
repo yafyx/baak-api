@@ -54,7 +54,7 @@ var (
 
 var (
 	httpClient = &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 60 * time.Second,
 		Transport: &http.Transport{
 			MaxIdleConns:        100,
 			MaxIdleConnsPerHost: 10,
@@ -226,6 +226,8 @@ func ensureSession() error {
 				fmt.Println("[DEBUG] Session established using HTTP request")
 				return nil
 			}
+		} else {
+			fmt.Printf("[DEBUG] simpleRequest(HTTP: %s) failed: %v\n", "http://baak.gunadarma.ac.id", err)
 		}
 
 		// Try HTTPS
@@ -240,16 +242,27 @@ func ensureSession() error {
 				fmt.Println("[DEBUG] Session established using HTTPS request")
 				return nil
 			}
+		} else {
+			fmt.Printf("[DEBUG] simpleRequest(HTTPS: %s) failed: %v\n", BaseURL, err)
 		}
 
 		// Try direct IP access as a last resort
-		fmt.Println("[DEBUG] Trying direct IP access method")
-		err = directIPRequest()
-		if err != nil {
-			return fmt.Errorf("failed to establish session: %v", err)
-		} else {
-			fmt.Println("[DEBUG] Session established using direct IP method")
+		// fmt.Println("[DEBUG] Trying direct IP access method")
+		// err = directIPRequest()
+		// if err != nil {
+		// 	 return fmt.Errorf("failed to establish session: %v", err)
+		// } else {
+		// 	 fmt.Println("[DEBUG] Session established using direct IP method")
+		// }
+
+		// If all methods failed without cookies
+		clientMutex.RLock()
+		hasCookiesAfterAttempts := len(httpClient.Jar.Cookies(baseUrl)) > 0
+		clientMutex.RUnlock()
+		if !hasCookiesAfterAttempts {
+			return fmt.Errorf("failed to establish session after trying HTTP, HTTPS (check logs for details)")
 		}
+
 	} else {
 		fmt.Println("[DEBUG] Session already established")
 	}
