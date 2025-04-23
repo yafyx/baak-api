@@ -1,12 +1,13 @@
 # BAAK API
+
 > [!IMPORTANT]  
-> Currently not working _:3_
+> Currently not working due to BAAK implementing Cloudflare protection as of April 2025 _:3_
 
 An unofficial API for BAAK.
 
 ## Disclaimer
 
-Project ini ga ada hubungannya sama Universitas Gunadarma atau BAAK ya. Ini cuma buat belajar aja, jangan dipake buat yang aneh-aneh. Developer ga bertanggung jawab kalo ada yang nyalahgunain ini.
+Perlu diketahui bahwa proyek ini tidak berafiliasi dengan Universitas Gunadarma maupun BAAK. Proyek ini dibuat murni untuk tujuan pembelajaran dan pengembangan keterampilan. Mohon untuk tidak menggunakan API ini untuk hal-hal yang tidak semestinya. Developer tidak bertanggung jawab atas penyalahgunaan yang mungkin terjadi dari penggunaan API ini.
 
 ## Fitur
 
