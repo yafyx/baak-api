@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/yafyx/baak-api/config"
@@ -28,8 +29,22 @@ func HandlerJadwal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("%s/jadwal/cariJadKul?&teks=%s", config.AppConfig.BaseURL, search)
-	jadwal, err := utils.GetJadwal(url)
+	// Fetch CSRF token from the base jadwal page
+	jadwalBaseURL := fmt.Sprintf("%s/jadwal", config.AppConfig.BaseURL)
+	token, err := utils.GetCSRFToken(jadwalBaseURL)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get CSRF token: %v", err))
+		return
+	}
+
+	// Construct the search URL with the token
+	searchURL := fmt.Sprintf("%s/jadwal/cariJadKul?_token=%s&teks=%s",
+		config.AppConfig.BaseURL,
+		url.QueryEscape(token),
+		url.QueryEscape(search),
+	)
+
+	jadwal, err := utils.GetJadwal(searchURL)
 	if err != nil {
 		utils.WriteHTTPError(w, err)
 		return
@@ -64,8 +79,22 @@ func HandlerJadwalSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url := fmt.Sprintf("%s/jadwal/cariJadKul?&teks=%s", config.AppConfig.BaseURL, search)
-	jadwal, err := utils.GetJadwal(url)
+	// Fetch CSRF token from the base jadwal page
+	jadwalBaseURL := fmt.Sprintf("%s/jadwal", config.AppConfig.BaseURL)
+	token, err := utils.GetCSRFToken(jadwalBaseURL)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Sprintf("Failed to get CSRF token: %v", err))
+		return
+	}
+
+	// Construct the search URL with the token
+	searchURL := fmt.Sprintf("%s/jadwal/cariJadKul?_token=%s&teks=%s",
+		config.AppConfig.BaseURL,
+		url.QueryEscape(token),
+		url.QueryEscape(search),
+	)
+
+	jadwal, err := utils.GetJadwal(searchURL)
 	if err != nil {
 		utils.WriteHTTPError(w, err)
 		return

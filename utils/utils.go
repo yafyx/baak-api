@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -374,6 +375,24 @@ func FetchDocument(url string) (*goquery.Document, error) {
 	humanDelay()
 
 	return FetchDocumentWithRetry(url, "", 5) // Increase max retries to 5
+}
+
+// GetCSRFToken fetches a page and extracts the CSRF token from a hidden input field.
+func GetCSRFToken(url string) (string, error) {
+	doc, err := FetchDocument(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch document for CSRF token: %w", err)
+	}
+
+	token, exists := doc.Find("input[name=\"_token\"]").First().Attr("value")
+	if !exists {
+		// Optionally log the HTML body here for debugging if token is not found
+		// html, _ := doc.Html()
+		// fmt.Println("DEBUG: HTML body:\n", html)
+		return "", errors.New("CSRF token input field not found on page: " + url)
+	}
+
+	return token, nil
 }
 
 func GetJadwal(url string) (models.Jadwal, error) {
